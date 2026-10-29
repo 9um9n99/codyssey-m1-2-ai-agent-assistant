@@ -1,0 +1,17 @@
+# 비밀 값: 절대 커밋 금지
+.env
+.env.*
+!.env.example
+*serviceAccount*.json
+*firebase-adminsdk*.json
+
+# 파이썬
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# 기타
+.DS_Store
+.vscode/
+.idea/

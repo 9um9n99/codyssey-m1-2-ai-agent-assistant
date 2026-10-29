@@ -1,0 +1,4 @@
+{
+  "buildCommand": "node scripts/make-config.js",
+  "outputDirectory": "frontend"
+}

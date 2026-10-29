@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeepFin - 깊은 바다로 떠나는 공부 모험</title>
+  <meta name="description" content="가상 친구 9명과 내 공부 시간을 비교하고, 공부가 쌓일수록 물고기가 더 깊이 내려가는 AI 비서">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/config.js"></script>
+  <script>
+    // 첫 화면이 깜빡이지 않도록 테마를 먼저 적용한다.
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem("theme"); } catch (e) {}
+      if (!t) t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <div class="app" id="app" data-view="chat">
+
+    <header class="topbar">
+      <div class="wordmark"><span class="wm-fish" id="wm-fish" aria-hidden="true"></span><span class="wm-text">DeepFin</span><span class="wm-tag">깊은 바다로 떠나는 공부 모험</span></div>
+      <div class="topbar-right">
+        <button type="button" class="pomo-chip pomo-badge" id="pomo-chip" hidden aria-label="뽀모도로 타이머 열기"></button>
+        <button type="button" class="status" id="status" data-state="wait" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span><span id="status-text">서버 확인 중</span>
+        </button>
+        <button type="button" class="btn-ghost" id="btn-settings">설정</button>
+      </div>
+    </header>
+
+    <!-- AI 채팅: 채팅 목록 + 채팅이 한 화면 -->
+    <main class="panel panel-chat" id="view-chat" data-pane="chat" aria-label="AI 채팅">
+      <section class="conv-col" aria-label="채팅 목록">
+        <div class="conv-head">
+          <h2>채팅 목록</h2>
+          <button type="button" class="btn-line" id="btn-new">+ 새 채팅</button>
+        </div>
+        <div class="conv-body" id="history-body"><p class="muted pad">불러오는 중...</p></div>
+      </section>
+      <section class="chat-col" aria-label="채팅">
+        <div class="chat-head">
+          <button type="button" class="btn-line only-mobile" id="btn-list">‹ 채팅 목록</button>
+          <h1 id="chat-title">새 채팅</h1>
+          <button type="button" class="btn-line only-mobile" id="btn-new-m">새 채팅</button>
+          <nav class="topnav" aria-label="주요 화면">
+          <button type="button" data-view="chat" aria-current="page">AI 채팅</button>
+          <button type="button" data-view="record">공부 기록</button>
+        </nav>
+        </div>
+        <div class="chat-scroll" id="chat-scroll">
+          <section class="chat-empty" id="chat-empty">
+            <div class="school" id="school" aria-hidden="true"></div>
+            <h2>오늘은 얼마나 깊이 내려가 볼까요?</h2>
+            <p>친구 9명과 내 공부 시간을 비교하고,<br>공부 습관도 함께 점검해 드려요.</p>
+            <div class="chips">
+              <button type="button" class="chip" data-q="친구들은 평균 몇 시간 공부해? 누가 제일 많이 해?">친구들은 하루 평균 몇 시간 공부해?</button>
+              <button type="button" class="chip" data-q="나는 오늘 지금 몇 위야? 친구들과 비교해서 알려줘.">지금 나는 몇 등이야?</button>
+              <button type="button" class="chip" data-q="내 공부 기록을 보고, 공부 습관에서 고치면 좋을 점을 알려줘.">내 공부 습관, 어떻게 고치면 좋을까?</button>
+              <button type="button" class="chip" data-q="오늘 3시간 공부했는데 친구들과 비교하면 어때?">오늘 3시간 공부했는데 친구들과 비교하면 어때?</button>
+            </div>
+          </section>
+          <ol class="messages" id="messages" aria-live="polite"></ol>
+        </div>
+        <form class="composer" id="chat-form" autocomplete="off">
+          <div class="composer-inner">
+            <label for="chat-input" class="sr-only">질문 입력</label>
+            <textarea id="chat-input" rows="1" maxlength="1000" placeholder="예: 오늘 3시간 공부했는데 어때?"></textarea>
+            <button type="submit" class="btn-primary" id="btn-send">보내기</button>
+          </div>
+          <p class="composer-hint"><span id="chat-counter" aria-live="off"></span></p>
+        </form>
+      </section>
+    </main>
+
+    <!-- 공부 기록: 기록하기(직접/뽀모도로) + 한눈에 보기 + 기록 목록이 한 화면 -->
+    <section class="panel panel-record" id="view-record" data-rtab="log" aria-label="공부 기록" hidden>
+      <div class="rec-head">
+        <div class="seg rec-seg" role="tablist" aria-label="공부 기록 보기">
+          <button type="button" role="tab" id="rt-log" data-rtab="log" aria-selected="true" aria-controls="pane-log">기록하기</button>
+          <button type="button" role="tab" id="rt-view" data-rtab="view" aria-selected="false" aria-controls="pane-view">한눈에 보기</button>
+        </div>
+        <nav class="topnav" aria-label="주요 화면">
+          <button type="button" data-view="chat">AI 채팅</button>
+          <button type="button" data-view="record" aria-current="page">공부 기록</button>
+        </nav>
+      </div>
+      <div class="rec-body">
+        <section class="rec-pane pane-log" id="pane-log" aria-label="기록하기">
+          <h2 class="pane-title">기록하기</h2>
+          <div class="mini-seg" role="tablist" aria-label="기록 방법">
+            <button type="button" role="tab" id="lg-manual" data-lg="manual" aria-selected="true" aria-controls="quick">직접 입력</button>
+            <button type="button" role="tab" id="lg-pomo" data-lg="pomo" aria-selected="false" aria-controls="pomo">뽀모도로</button>
+            <button type="button" role="tab" id="lg-watch" data-lg="watch" aria-selected="false" aria-controls="watch">스톱워치</button>
+          </div>
+          <form class="quick" id="quick" autocomplete="off" novalidate>
+            <div class="quick-top">
+              <label class="quick-title" id="q-title" for="q-hours">오늘 공부한 시간</label>
+              <span class="quick-note" id="q-note"></span>
+            </div>
+            <div class="quick-row">
+              <input id="q-hours" type="number" min="0" max="24" step="1" value="1" inputmode="numeric" aria-label="시간">
+              <span>시간</span>
+              <input id="q-minutes" type="number" min="0" max="59" step="5" value="0" inputmode="numeric" aria-label="분">
+              <span>분</span>
+              <button type="submit" class="btn-primary" id="q-submit">기록하기</button>
+            </div>
+            <p class="form-error" id="q-error" role="alert"></p>
+          </form>
+          <div class="pomo watch" id="watch" hidden>
+            <div class="pomo-top">
+              <span class="pomo-mode" data-mode="focus">측정</span>
+            </div>
+            <div class="pomo-time" id="watch-time" role="timer">00:00</div>
+            <div class="pomo-actions">
+              <button type="button" class="btn-primary" id="watch-start">측정 시작</button>
+              <button type="button" class="btn-line" id="watch-save" hidden>완료</button>
+              <button type="button" class="btn-ghost" id="watch-reset">취소</button>
+            </div>
+          </div>
+          <div class="pomo" id="pomo" hidden>
+            <div class="pomo-top">
+              <span class="pomo-mode" id="pomo-mode">집중</span>
+              <span class="quick-note" id="pomo-count"></span>
+            </div>
+            <div class="pomo-time" id="pomo-time" role="timer">25:00</div>
+            <div class="pomo-bar" aria-hidden="true"><i id="pomo-fill"></i></div>
+            <div class="pomo-actions">
+              <button type="button" class="btn-primary" id="pomo-start">시작</button>
+              <button type="button" class="btn-line" id="pomo-stop" hidden>완료</button>
+              <button type="button" class="btn-ghost" id="pomo-reset">취소</button>
+              <button type="button" class="btn-ghost" id="pomo-skip" hidden>휴식 건너뛰기</button>
+            </div>
+            <p class="quick-note" id="pomo-note"></p>
+            <fieldset class="pomo-set" id="pomo-set">
+              <legend>시간 설정</legend>
+              <div class="ps-row">
+                <span class="ps-l">집중</span>
+                <div class="stepper">
+                  <button type="button" id="ps-f-dec" aria-label="집중 시간 5분 줄이기">−</button>
+                  <input id="ps-focus" type="number" min="5" max="90" step="5" inputmode="numeric" aria-label="집중 시간(분)">
+                  <button type="button" id="ps-f-inc" aria-label="집중 시간 5분 늘리기">+</button>
+                </div>
+                <span class="ps-u">분</span>
+              </div>
+              <div class="ps-row">
+                <span class="ps-l">휴식</span>
+                <div class="stepper">
+                  <button type="button" id="ps-b-dec" aria-label="휴식 시간 1분 줄이기">−</button>
+                  <input id="ps-break" type="number" min="1" max="30" step="1" inputmode="numeric" aria-label="휴식 시간(분)">
+                  <button type="button" id="ps-b-inc" aria-label="휴식 시간 1분 늘리기">+</button>
+                </div>
+                <span class="ps-u">분</span>
+              </div>
+              <p class="form-error" id="ps-error" role="alert"></p>
+              <p class="quick-note ps-lock" id="ps-lock" hidden>진행 중에는 바꿀 수 없어요.</p>
+            </fieldset>
+          </div>
+
+          <div class="past">
+            <button type="button" class="btn-line block" id="add-past-btn" aria-expanded="false" aria-controls="data-form">+ 지난 날짜 기록 추가</button>
+<form id="data-form" class="data-form" autocomplete="off" novalidate hidden>
+              <label class="field">
+                <span>날짜</span>
+                <input id="f-date" name="date" type="date" required>
+              </label>
+              <div class="field">
+                <span id="dur-label">공부한 시간</span>
+                <div class="dur" role="group" aria-labelledby="dur-label">
+                  <input id="f-hours" type="number" min="0" max="24" step="1" value="2" inputmode="numeric" aria-label="시간">
+                  <span>시간</span>
+                  <input id="f-minutes" type="number" min="0" max="59" step="5" value="0" inputmode="numeric" aria-label="분">
+                  <span>분</span>
+                </div>
+              </div>
+              <label class="field">
+                <span>메모</span>
+                <input id="f-memo" name="memo" maxlength="200" placeholder="예: 자소서, 인적성">
+              </label>
+              <p class="form-error" id="f-error" role="alert"></p>
+              <div class="form-btns">
+                <button type="button" class="btn-line" id="f-cancel">취소</button>
+                <button type="submit" class="btn-primary" id="f-submit">기록 추가</button>
+              </div>
+            </form>
+          </div>
+          <div class="my-list">
+            <div class="list-head">
+              <h3 id="data-count">내 기록</h3>
+              <div class="export-btns">
+                <button type="button" class="btn-line" id="export-csv">CSV 저장</button>
+                <button type="button" class="btn-line" id="export-json">JSON 저장</button>
+              </div>
+            </div>
+            <ul class="data-list" id="data-list"></ul>
+            <button type="button" class="btn-line block" id="data-more" hidden>더 보기</button>
+          </div>
+        </section>
+
+        <section class="rec-pane pane-view" id="pane-view" aria-label="한눈에 보기">
+          <div class="records" id="records"><p class="muted pad">불러오는 중...</p></div>
+        </section>
+
+      </div>
+    </section>
+
+    <!-- 내 어항 + 오늘 지금까지 + 순위 -->
+    <aside class="panel panel-side" id="view-summary" aria-label="내 어항과 순위">
+      <div id="summary-body" class="side-scroll"><p class="muted pad">불러오는 중...</p></div>
+    </aside>
+
+    <nav class="bottom-nav" aria-label="화면 전환">
+      <button type="button" data-view="chat" aria-current="page">AI 채팅</button>
+      <button type="button" data-view="record">공부 기록</button>
+      <button type="button" data-view="summary">내 어항</button>
+    </nav>
+  </div>
+
+  <dialog id="dlg-confirm" aria-labelledby="confirm-title">
+    <form method="dialog">
+      <h2 id="confirm-title">삭제할까요?</h2>
+      <p id="confirm-msg" class="muted"></p>
+      <div class="dlg-actions">
+        <button type="submit" value="cancel" class="btn-line">취소</button>
+        <button type="submit" value="ok" class="btn-danger" id="confirm-ok">삭제</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-edit" aria-labelledby="edit-title">
+    <form id="edit-form" method="dialog">
+      <h2 id="edit-title">기록 수정</h2>
+      <p class="muted" id="edit-who"></p>
+      <div class="field">
+        <span id="edit-dur-label">공부한 시간</span>
+        <div class="dur" role="group" aria-labelledby="edit-dur-label">
+          <input id="e-hours" type="number" min="0" max="24" step="1" inputmode="numeric" aria-label="시간">
+          <span>시간</span>
+          <input id="e-minutes" type="number" min="0" max="59" step="5" inputmode="numeric" aria-label="분">
+          <span>분</span>
+        </div>
+      </div>
+      <label class="field">
+        <span>메모</span>
+        <input id="e-memo" maxlength="200">
+      </label>
+      <p class="form-error" id="e-error" role="alert"></p>
+      <div class="dlg-actions">
+        <button type="button" class="btn-line" id="e-cancel">취소</button>
+        <button type="submit" class="btn-primary" id="e-save">저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-friends" class="dlg-wide" aria-labelledby="fr-title">
+    <h2 id="fr-title">친구 소개</h2>
+    <p class="muted fr-basis" id="fr-basis"></p>
+    <div id="fr-list" class="fr-list"></div>
+    <div class="dlg-actions"><button type="button" class="btn-primary" id="fr-close">닫기</button></div>
+  </dialog>
+
+  <dialog id="dlg-info" class="dlg-wide" aria-labelledby="info-title">
+    <h2 id="info-title">어항과 수심</h2>
+    <div class="info-body" id="info-body"></div>
+    <div class="dlg-actions"><button type="button" class="btn-primary" id="info-close">닫기</button></div>
+  </dialog>
+  <dialog id="dlg-settings" aria-labelledby="set-title">
+    <h2 id="set-title">설정</h2>
+    <div class="field">
+      <span id="set-color-label">내 물고기 색</span>
+      <div class="set-fish">
+        <div class="set-preview" id="set-preview" aria-hidden="true"></div>
+        <div>
+          <div class="swatches" id="set-swatches" role="radiogroup" aria-labelledby="set-color-label"></div>
+          <label class="custom-color"><span>직접 고르기</span><input type="color" id="set-custom" aria-label="물고기 색 직접 고르기"></label>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <span id="set-theme-label">화면 모드</span>
+      <div class="mini-seg set-theme" id="set-theme" role="radiogroup" aria-labelledby="set-theme-label">
+        <button type="button" role="radio" data-theme-val="light" aria-checked="true">라이트</button>
+        <button type="button" role="radio" data-theme-val="dark" aria-checked="false">다크</button>
+      </div>
+    </div>
+    <div class="dlg-actions"><button type="button" class="btn-primary" id="set-close">닫기</button></div>
+  </dialog>
+
+  <div id="toasts" aria-live="polite"></div>
+</body>
+</html>
