@@ -28,8 +28,11 @@ def _load_credential():
     path = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
     if path:  # 로컬: 프로젝트 폴더 밖의 키 파일 경로
         if not os.path.isfile(path):
-            raise FirebaseConfigError(f"서비스 계정 키 파일을 찾을 수 없습니다: {path}")
-        return credentials.Certificate(path)
+            raise FirebaseConfigError("서비스 계정 키 파일을 찾을 수 없습니다. 경로 설정을 확인하세요.")
+        try:
+            return credentials.Certificate(path)
+        except (ValueError, OSError) as e:  # 파일이 비었거나 JSON 모양이 깨졌을 때
+            raise FirebaseConfigError(f"서비스 계정 키 파일 내용이 올바르지 않습니다. ({type(e).__name__})") from e
     raise FirebaseConfigError("FIREBASE_SERVICE_ACCOUNT_PATH 또는 FIREBASE_SERVICE_ACCOUNT_JSON 을 설정하세요.")
 
 

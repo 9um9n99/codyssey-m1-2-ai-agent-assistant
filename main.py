@@ -38,7 +38,15 @@ app.add_middleware(
 async def firebase_config_error_handler(request: Request, exc: FirebaseConfigError):
     # 상세 원인은 서버 로그에만 남기고, 응답에는 내부 정보(경로 등)를 싣지 않는다.
     logger.error("Firebase 설정 오류: %s", exc)
-    return JSONResponse(status_code=503, content={"detail": "서버의 DB 설정에 문제가 있습니다."})
+    # reason에는 경로·키 같은 비밀이 없는 짧은 설명만 담는다(원인 찾기용).
+    return JSONResponse(status_code=503, content={"detail": "서버의 DB 설정에 문제가 있습니다.", "reason": str(exc)})
+
+
+@app.exception_handler(Exception)
+async def unhandled_error_handler(request: Request, exc: Exception):
+    # 예상 못 한 오류도 로그에 남기고, 응답에는 오류 종류(클래스 이름)만 알려 준다.
+    logger.exception("처리되지 않은 오류")
+    return JSONResponse(status_code=500, content={"detail": "서버 오류가 났어요.", "error": type(exc).__name__})
 
 
 app.include_router(health.router)
