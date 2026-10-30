@@ -9,9 +9,9 @@
 
 | 구분 | 주소 |
 | --- | --- |
-| 프론트엔드 (Vercel) | (배포 후 입력) |
-| 백엔드 (Render) | (배포 후 입력) |
-| API 문서 (Swagger) | (백엔드 주소)/docs |
+| 프론트엔드 (Vercel) | https://deepfin-sigma.vercel.app |
+| 백엔드 (Render) | https://deepfin-api.onrender.com |
+| API 문서 (Swagger) | https://deepfin-api.onrender.com/docs |
 
 > **처음 접속이 느릴 수 있어요.** 백엔드가 무료 플랜이라 한동안 쓰지 않으면 잠들어요. 첫 요청은 깨어나는 데 최대 1분쯤 걸립니다. 화면 위쪽에 "서버 확인 중"이 보이는 동안 기다려 주세요.
 
